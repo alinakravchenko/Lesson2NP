@@ -18,11 +18,13 @@ namespace Lesson2NP
         }
         private void btn_connectServer_Click(object sender, EventArgs e)
         {
-            command.ConnectServer(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 80), contact.Socket);
-            Thread thread = Thread.CurrentThread;
-            thread.Join(500);
+           if (command.ConnectServer(new IPEndPoint(IPAddress.Parse("192.168.150.12"), 80), contact.Socket))
+            {
+           
             if (command.ServerIsConnected())
-                rtb_chat.Text = "GoodConnect\n";
+                rtb_chat.Text = command._answer;
+
+            }
 
         }
 
