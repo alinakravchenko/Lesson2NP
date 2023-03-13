@@ -3,6 +3,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Contact;
+using ClientCommands;
+using System.Text.RegularExpressions;
+using ServerCommand;
 namespace Server
 {
     public partial class Form1 : Form
@@ -10,8 +13,7 @@ namespace Server
 
         Socket server;
         IPEndPoint point;
-        List<Socket> clientSockets = new List<Socket>();
-        List<Class1> contacts = new List<Class1>();
+        ServerClientCommand command =  new ServerClientCommand();
         public Form1()
         {
             InitializeComponent();
@@ -49,31 +51,20 @@ namespace Server
 
         private void tmr_refreshConnection_Tick(object sender, EventArgs e)
         {
-            try
+            if (command.GetClientSocket(server))
             {
-                server.BeginAccept(ServerAcceptDelegate, server);
-                byte[] buffer = new byte[1024];
-                ArraySegment<byte> segment = new ArraySegment<byte>(buffer, 0, buffer.Length);
-                foreach (Socket client in clientSockets)
+                if (command.clientSockets.Count > 0)
                 {
-                    Task<int> answer = client.ReceiveAsync(segment, SocketFlags.None);
-                    if (answer.IsCompleted)
+                    foreach(Socket client in command.clientSockets)
                     {
-                        string text = Encoding.UTF8.GetString(segment);
-                        IAsyncResult updateText = rtb_clients.BeginInvoke(RichTextBoxOutputDelegate, text);
-                        rtb_clients.EndInvoke(updateText);
-                        if (text.StartsWith("Contact"))
-                        {
-                            string[] contactStrings = text.Split("|");
-                            contacts.Add(new Class1(client, contactStrings[1], contactStrings[3], contactStrings[2], contactStrings[4]));
-                        }
+                       command.CommandManage(command.ReciveMessage(client),client);
                     }
                 }
 
             }
-            catch (Exception ex)
+            else
             {
-                MessageBox.Show(ex.Message);
+                MessageBox.Show(command.error);
             }
         }
 
@@ -89,23 +80,7 @@ namespace Server
             }
         }
 
-        void ServerAcceptDelegate(IAsyncResult result)
-        {
-            if (result != null)
-            {
-                Socket serv = (Socket)result.AsyncState;
-                if (serv != null)
-                {
-                    Socket clientsocket = serv.EndAccept(result);
-                    clientSockets.Add(clientsocket);
-                    clientsocket.Send(Encoding.UTF8.GetBytes("Great Job!"));
-
-                    IAsyncResult updateText = rtb_clients.BeginInvoke(RichTextBoxOutputDelegate, clientsocket.RemoteEndPoint.ToString());
-                    rtb_clients.EndInvoke(updateText);
-                }
-
-            }
-        }
+       
 
         void RichTextBoxOutputDelegate(object obj)
         {
@@ -114,10 +89,12 @@ namespace Server
 
         private void btn_updateClientsList_Click(object sender, EventArgs e)
         {
-            foreach (Class1 client in contacts)
+            foreach (Class1 client in command.contacts)
             {
                 rtb_clients.Text += client.ToString();
             }
         }
     }
+
+   
 }

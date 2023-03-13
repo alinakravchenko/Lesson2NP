@@ -2,6 +2,8 @@
 using System.Net.Sockets;
 using System.Text;
 using Contact;
+using ClientCommands;
+
 namespace Lesson2NP
 
 {
@@ -20,7 +22,7 @@ namespace Lesson2NP
             Thread thread = Thread.CurrentThread;
             thread.Join(500);
             if (command.ServerIsConnected())
-                rtb_chat.Text = "Ïîäêëþ÷åíèå óñïåøíî\n";
+                rtb_chat.Text = "GoodConnect\n";
 
         }
 
@@ -59,9 +61,9 @@ namespace Lesson2NP
         {
             contact = new Class1(
             new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.IP),
-            "Ilya" + DateTime.Now.Millisecond.ToString(),
+            "Heylin" + DateTime.Now.Millisecond.ToString(),
             "123456",
-            "iluxailuxa@gmail.com",
+            "miskasupa@gmail.com",
             "+79287604894"
             );
             command = new ClientServerCommand();
@@ -69,51 +71,5 @@ namespace Lesson2NP
     }
 
 
-    class ClientServerCommand
-    {
-        Socket client { get; set; }
-        Socket server { get; set; }
-
-        string _answer = "";
-        public bool ConnectServer(IPEndPoint point, Socket clientSocket)
-        {
-            try
-            {
-                client = clientSocket;
-                client.BeginConnect(point, (IAsyncResult result) =>
-                {
-                    server = (Socket)result.AsyncState;
-                    if (server.Connected)
-                    {
-
-                        byte[] buffer = new byte[1024];
-                        int answerServer = server.Receive(buffer);
-                        while (answerServer > 0)
-                        {
-                            _answer += Encoding.UTF8.GetString(buffer);
-                            answerServer = server.Receive(buffer);
-                        }
-                    }
-                }, client);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message);
-            }
-            return _answer == "I Dont no" ? true : false;
-        }
-        public void SendMessage(string message)
-        {
-            if (server.Connected)
-            {
-                byte[] buffer = Encoding.UTF8.GetBytes(message);
-                ArraySegment<byte> segment = new ArraySegment<byte>(buffer, 0, buffer.Length);
-                client.SendAsync(segment, SocketFlags.None);
-            }
-        }
-        public bool ServerIsConnected()
-        {
-            return server != null ? true : false;
-        }
-    }
+   
 }
