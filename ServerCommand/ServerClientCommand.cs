@@ -29,12 +29,21 @@ namespace ServerCommand
                 {
                     Socket clientsocket = serv.EndAccept(result);
                     clientSockets.Add(clientsocket);
-                    clientsocket.Send(Encoding.UTF8.GetBytes("Connected!"));
+                    byte[] buffer = Encoding.UTF8.GetBytes("Connected!");
+                    ArraySegment<byte> segment = new ArraySegment<byte>(buffer, 0, buffer.Length);
+                    clientsocket.BeginSend(buffer, 0, buffer.Length, SocketFlags.None, SendMessageDelegate, clientsocket);
+                    //clientsocket.SendAsync(segment, SocketFlags.None);
+
 
 
                 }
 
             }
+        }
+        void SendMessageDelegate(IAsyncResult result)
+        {
+            Socket client = (Socket)result.AsyncState;
+            client.EndSend(result);
         }
         public string ReciveMessage(Socket client)
         {
